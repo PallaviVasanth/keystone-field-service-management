@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/keystone_dev}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        generate_statistics: false
+
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
+  flyway:
+    clean-disabled: true   # allow flyway:clean locally only, never in 
+
+logging:
+  level:
+    root: INFO
+    com.keystone: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+server:
+  port: ${SERVER_PORT:8080}
