@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # KEYSTONE Backend
 
 Backend service for **Project KEYSTONE — Field Service Management Platform**,
@@ -277,3 +278,7 @@ subsequent phases:
 ---
 
 *Zidio Development · Java Full-Stack Engineering Internship · Project KEYSTONE*
+=======
+# keystone-backend
+Backend for the Keystone Field Service Management Platform built with Spring Boot.
+>>>>>>> ff45a29f130c2a0dece4bca314e472e59416164e
