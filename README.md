@@ -1,284 +1,289 @@
-<<<<<<< HEAD
-# KEYSTONE Backend
+# KEYSTONE – Field Service Management Platform
 
-Backend service for **Project KEYSTONE — Field Service Management Platform**,
-built for Meridian Facilities Management as part of a Zidio Development
-Java Full-Stack internship engagement.
+Backend REST API for a modern **Field Service Management (FSM)** system developed using **Spring Boot**.
 
-> **Status: Phase 1 — Project Foundation.**
-> This repository currently contains scaffolding only: package structure,
-> build configuration, environment profiles, and local infrastructure.
-> No authentication, business logic, REST endpoints, or database schema
-> have been implemented yet. See [Roadmap](#roadmap--future-modules) below.
+This project was developed as part of the **Zidio Development Java Full Stack Internship**.
 
 ---
 
-## 1. Project Overview
+## 📌 Project Overview
 
-KEYSTONE is the system of record for Meridian's field-service operation —
-from a customer raising a request, through dispatch and on-site work, to
-completion, sign-off, and reporting. The platform serves four roles:
-**dispatcher**, **technician**, **manager/admin**, and **customer**, each
-with a distinct view and a server-enforced set of permissions.
+KEYSTONE is a Field Service Management platform designed to streamline service operations by managing customers, service sites, technicians, work orders, and assets.
 
-This repository is the **back end**: a Spring Boot REST API backed by
-PostgreSQL, designed to be consumed by the existing React + TypeScript
-front end (developed separately by a teammate).
+The backend exposes secure RESTful APIs protected with JWT Authentication and is designed to integrate with a React frontend.
 
 ---
 
-## 2. Tech Stack
+## ✨ Features
 
-| Layer          | Technology                          |
-|----------------|--------------------------------------|
-| Language       | Java 21                              |
-| Framework      | Spring Boot 3.5.x                    |
-| Build tool     | Maven (via Maven Wrapper)            |
-| Web            | Spring Web (MVC)                     |
-| Persistence    | Spring Data JPA / Hibernate          |
-| Database       | PostgreSQL                           |
-| Migrations     | Flyway                               |
-| Security       | Spring Security (config pending)     |
-| Validation     | Jakarta Bean Validation               |
-| Boilerplate    | Lombok                               |
-| Dev experience | Spring Boot DevTools                 |
-| Local infra    | Docker Compose (PostgreSQL only)     |
-
-No JWT library, API-doc generator (Swagger/OpenAPI), or MapStruct has been
-added yet — these are deliberately deferred to later phases so this
-scaffold stays lean and easy to review.
+- JWT Authentication & Authorization
+- Customer Management
+- Site Management
+- Technician Management
+- Work Order Management
+- Asset Management
+- Dashboard Summary
+- Global Exception Handling
+- Request Validation
+- Database Migration using Flyway
+- Swagger (OpenAPI) Documentation
 
 ---
 
-## 3. Folder Structure
+## 🛠 Technology Stack
 
-The codebase uses **feature-based** packaging rather than traditional
-layer-based packaging (i.e. no top-level `controllers/`, `services/`,
-`repositories/` containing every feature mixed together). Each business
-capability owns its own vertical slice:
+| Category | Technology |
+|----------|------------|
+| Language | Java 21 |
+| Framework | Spring Boot 3.5 |
+| Build Tool | Maven |
+| Database | PostgreSQL |
+| ORM | Spring Data JPA (Hibernate) |
+| Security | Spring Security + JWT |
+| Database Migration | Flyway |
+| Validation | Jakarta Bean Validation |
+| Documentation | Swagger (OpenAPI 3) |
+| Utilities | Lombok |
+| Version Control | Git & GitHub |
 
-```
-com.keystone
-├── auth/                  # authentication & credential handling (Phase 2)
-│   ├── controller/
-│   ├── dto/
-│   ├── entity/
-│   ├── repository/
-│   ├── service/
-│   │   └── impl/
-│   ├── mapper/
-│   └── util/
-│
-├── user/                  # platform users & roles (Phase 2)
-│   ├── controller/
-│   ├── dto/
-│   ├── entity/
-│   ├── repository/
-│   ├── service/
-│   │   └── impl/
-│   └── mapper/
-│
-├── customer/               # customers & sites (Phase 2+)
-├── workorder/               # work-order lifecycle, parts, time, SLA (Phase 3)
-├── technician/               # technician field view (Phase 3)
-├── dispatcher/               # dispatch & assignment (Phase 3)
-│   └── (each mirrors the controller/dto/entity/repository/service/mapper shape above)
-│
-├── common/                  # cross-cutting, feature-agnostic code
-│   ├── exception/            # global exception handling, custom exceptions
-│   ├── constants/             # shared constants/enums
-│   ├── response/               # standard API response envelopes
-│   └── util/                    # generic helpers
-│
-├── config/                   # Spring @Configuration classes (CORS, beans, OpenAPI, etc.)
-├── security/                  # Spring Security configuration, JWT filter (Phase 2)
-└── KeystoneBackendApplication.java
-```
+---
 
-**Note on `service.impl`:** the brief describes this as `service.impl`,
-but Java package names map directly to nested directories — a single
-folder literally named `service.impl` would not compile as package
-`com.keystone.<feature>.service.impl`. This scaffold uses the equivalent,
-compiler-correct nested form `service/impl/`, which is the standard
-convention for separating a service **interface** from its
-**implementation**.
-
-### Resources
+## 🏗 System Architecture
 
 ```
-src/main/resources/
-├── application.yml          # shared configuration, profile-agnostic
-├── application-dev.yml       # local development overrides
-├── application-prod.yml       # production overrides
-├── db/migration/                # Flyway SQL migrations (empty for now)
-├── static/                        # static assets, if ever served by this app
-└── templates/                      # server-rendered templates, if ever needed
+The KEYSTONE backend follows a layered architecture that separates authentication, business logic, persistence, and database access into independent layers. This architecture improves maintainability, scalability, and code organization while enabling secure communication between the frontend and backend through JWT authentication.
+
+<p align="center">
+  <img src="docs/images/System%20Architecture.png"
+       alt="KEYSTONE System Architecture"
+       width="900"/>
+</p>
+
+### Architecture Overview
+
+The request flow is:
+
+1. React Frontend sends API requests.
+2. Spring Security validates every request.
+3. JWT Authentication Filter authenticates the user.
+4. REST Controllers receive HTTP requests.
+5. Service Layer executes business logic.
+6. Repository Layer interacts with PostgreSQL.
+7. Flyway manages database schema migrations.
+
 ```
 
 ---
 
-## 4. Prerequisites
+## 📂 Project Structure
 
-- **Java 21** (JDK)
-- **Docker** and **Docker Compose** (for local PostgreSQL)
-- Maven is **not** required to be pre-installed — this project ships the
-  Maven Wrapper (`mvnw` / `mvnw.cmd`).
+```
+src
+├── asset
+├── auth
+├── common
+├── config
+├── customer
+├── dashboard
+├── dispatcher
+├── security
+├── site
+├── technician
+├── user
+└── workorder
+```
 
 ---
 
-## 5. How to Run (Local Development)
+## 🗄 Database
 
-### 5.1 Start PostgreSQL
+The database schema is managed using Flyway.
 
-Create a `.env` file in the project root (git-ignored) with at least:
+Migration Files:
+
+- V1 – Users
+- V2 – Customers
+- V3 – Sites
+- V4 – Technicians
+- V5 – Work Orders
+- V6 – Assets
+
+---
+
+## 🔐 Authentication
+
+JWT Authentication is used for securing protected APIs.
+
+Example:
 
 ```
-DB_NAME=keystone_dev
-DB_USERNAME=postgres
-DB_PASSWORD=change-me-locally
-DB_PORT=5432
+Authorization: Bearer <JWT_TOKEN>
 ```
 
-Then start the database:
+Public APIs:
+
+- Register
+- Login
+- Swagger UI
+- Health Check
+
+---
+
+## 📚 API Modules
+
+| Module | Endpoints |
+|---------|-----------|
+| Authentication | Register, Login |
+| Customers | Create, Read, Update, Delete |
+| Sites | Create, Read, Update, Delete |
+| Technicians | Create, Read, Update, Delete |
+| Work Orders | Create, Read, Update, Delete |
+| Assets | Create, Read, Update, Delete |
+| Dashboard | Summary Statistics |
+
+---
+
+## 📖 API Documentation
+
+Swagger UI
+
+```
+http://localhost:8080/api/swagger-ui/index.html
+```
+
+OpenAPI Specification
+
+```
+http://localhost:8080/api/v3/api-docs
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Java 21
+- Maven
+- PostgreSQL
+- Git
+
+### Clone Repository
 
 ```bash
-docker compose up -d
+git clone <repository-url>
+cd keystone-backend
 ```
 
-### 5.2 Configure environment variables
+### Configure Database
 
-The application reads its datasource credentials from environment
-variables (see `application-dev.yml`). At minimum, export:
+Update the datasource configuration in:
+
+```
+src/main/resources/application.yml
+```
+
+### Build
 
 ```bash
-export DB_URL=jdbc:postgresql://localhost:5432/keystone_dev
-export DB_USERNAME=keystone_user
-export DB_PASSWORD=change-me-locally
+mvnw.cmd clean install
 ```
 
-### 5.3 Run the application
-
-```bash
-./mvnw spring-boot:run
-```
-
-Windows:
+### Run
 
 ```bash
 mvnw.cmd spring-boot:run
 ```
 
-The `dev` profile is active by default (`SPRING_PROFILES_ACTIVE` defaults
-to `dev` in `application.yml`). The app starts on **port 8080** unless
-`SERVER_PORT` is set.
+Application URL
 
-### 5.4 Run tests
-
-```bash
-./mvnw test
+```
+http://localhost:8080/api
 ```
 
-The included smoke test (`KeystoneBackendApplicationTests`) verifies the
-Spring context loads and does not require a live database — data-layer
-autoconfiguration is excluded specifically for that test.
+---
 
-### 5.5 Migrations / seed data
+## 🧪 Testing
 
-Not applicable yet — `db/migration/` is empty by design. See
-`src/main/resources/db/migration/README.md` for the naming convention
-that will be followed once entities are introduced.
+The backend APIs were tested using:
+
+- Swagger UI
+- Postman
+
+Verified functionality includes:
+
+- CRUD Operations
+- JWT Authentication
+- Validation
+- Exception Handling
+- Dashboard APIs
+- Database Persistence
 
 ---
 
-## 6. Environment Variables Reference
+## 🔮 Future Enhancements
 
-| Variable                | Used in       | Purpose                                   | Default (dev)                              |
-|--------------------------|---------------|---------------------------------------------|-----------------------------------------------|
-| `SPRING_PROFILES_ACTIVE` | all           | Active Spring profile                         | `dev`                                          |
-| `SERVER_PORT`             | all           | HTTP port                                      | `8080`                                          |
-| `DB_URL`                   | dev / prod    | JDBC connection string                          | `jdbc:postgresql://localhost:5432/keystone_dev` |
-| `DB_USERNAME`               | dev / prod    | Database user                                    | `keystone_user`                                  |
-| `DB_PASSWORD`                | dev / prod    | Database password                                 | *(none — must be supplied)*                       |
-| `DB_POOL_SIZE`                | prod          | HikariCP max pool size                              | `20`                                                |
-| `JWT_SECRET`                    | all (unused yet) | Reserved for Phase 2 JWT signing                | *(empty)*                                            |
-| `JWT_EXPIRATION_MS`              | all (unused yet) | Reserved for Phase 2 token expiry                | `3600000`                                              |
-| `CORS_ALLOWED_ORIGINS`             | all (unused yet) | Reserved for Phase 2 CORS config vs. the React SPA | `http://localhost:5173`                                 |
-
-None of these have hard-coded secrets in source control — all
-credentials must be supplied via environment at runtime.
+- Role-Based Access Control (RBAC)
+- Email Notifications
+- File Attachments
+- Technician GPS Tracking
+- Inventory Management
+- Reports & Analytics
+- Docker Support
+- CI/CD Pipeline
 
 ---
 
-## 7. Architecture Summary
+## 👥 Project Contributions
 
-- **Layered inside each feature, not across the whole app.** Every
-  feature package (`auth`, `user`, `customer`, `workorder`,
-  `technician`, `dispatcher`) is self-contained: its own controller,
-  DTOs, entity, repository, service interface + implementation, and
-  mapper. This keeps each business capability easy to locate, test, and
-  eventually extract if the platform ever needs to be split apart.
-- **`common/` holds only what is genuinely cross-cutting** — exception
-  handling, shared constants, a standard API response envelope, and
-  generic utilities. It must never depend on a feature package.
-- **`config/` and `security/` are infrastructure, not business logic.**
-  CORS, bean wiring, and (later) JWT/Spring Security rules live here,
-  separate from the feature slices they support.
-- **Hibernate never owns the schema.** `ddl-auto: validate` plus Flyway
-  means every schema change is a reviewed, versioned SQL migration —
-  never implicit auto-generation.
-- **Configuration is profile-driven.** `application.yml` holds
-  profile-agnostic defaults; `application-dev.yml` and
-  `application-prod.yml` override only what actually differs between
-  environments (logging verbosity, pool sizing, error detail exposure).
+| Component | Contributor |
+|-----------|-------------|
+| Backend API Development | **Pallavi V** |
+| Database Design & Flyway Migrations | **Pallavi V** |
+| Authentication & Security | **Pallavi V** |
+| REST API Testing | **Pallavi V** |
+| API Documentation (Swagger) | **Pallavi V** |
+| Frontend Application | **Santhosh** |
 
 ---
 
-## 8. Frontend Compatibility Note
+## 👩‍💻 Developer
 
-A React + TypeScript front end already exists for this project and was
-reviewed (read-only) to keep this scaffold compatible with it — package
-naming, the four-role model (dispatcher / technician / manager /
-customer), and the expected resource vocabulary (customers, sites, work
-orders) all line up with what the UI already expects. The front end
-currently runs against local mock data; no endpoints are wired up yet,
-which will happen once the `auth` and `workorder` modules are
-implemented in later phases.
+**Pallavi V**
 
----
+Master of Computer Applications (MCA)
 
-## 9. Roadmap / Future Modules
+The Oxford College of Engineering
 
-This scaffold deliberately excludes the following — all planned for
-subsequent phases:
-
-- **Phase 2 — Foundation logic:** JWT authentication, Spring Security
-  rules, `User` entity + roles, global exception handling via
-  `common/exception`, first Flyway migrations.
-- **Phase 3 — Core domain:** Customers & sites, the work-order entity
-  and governed lifecycle (state machine), dispatch/assignment, parts &
-  time logging.
-- **Phase 4 — Platform features:** SLA tracking & notifications,
-  manager dashboard/reporting endpoints, customer self-service portal.
-- **Phase 5 — Productionizing:** OpenAPI/Swagger documentation,
-  integration tests, containerized deployment, CI/CD.
+Developed as part of the **Zidio Development Java Full Stack Internship**.
 
 ---
 
-## 10. Conventions for Contributors
+## 📄 License
 
-- Business logic belongs in `service` implementations — controllers
-  stay thin (HTTP concerns only).
-- Entities are never returned directly from controllers — always map to
-  a DTO (mapper classes live alongside each feature).
-- No secrets committed to the repository — use environment variables or
-  a git-ignored `.env` file locally.
-- New feature modules should mirror the existing package shape
-  (`controller / dto / entity / repository / service(+impl) / mapper`).
+This project was developed for educational and internship purposes.
 
 ---
 
-*Zidio Development · Java Full-Stack Engineering Internship · Project KEYSTONE*
-=======
-# keystone-backend
-Backend for the Keystone Field Service Management Platform built with Spring Boot.
->>>>>>> ff45a29f130c2a0dece4bca314e472e59416164e
+## ⭐ Project Status
+
+| Module | Status |
+|---------|--------|
+| Authentication | ✅ Complete |
+| Customer Module | ✅ Complete |
+| Site Module | ✅ Complete |
+| Technician Module | ✅ Complete |
+| Work Order Module | ✅ Complete |
+| Asset Module | ✅ Complete |
+| Dashboard | ✅ Complete |
+| Swagger Documentation | ✅ Complete |
+| Flyway Migrations | ✅ Complete |
+| PostgreSQL Integration | ✅ Complete |
+
+---
+
+<p align="center">
+
+**Thank you for visiting the KEYSTONE Field Service Management Platform repository.**
+
+</p>
