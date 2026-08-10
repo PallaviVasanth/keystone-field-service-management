@@ -53,11 +53,7 @@ The backend exposes secure RESTful APIs protected with JWT Authentication and is
 ```
 The KEYSTONE backend follows a layered architecture that separates authentication, business logic, persistence, and database access into independent layers. This architecture improves maintainability, scalability, and code organization while enabling secure communication between the frontend and backend through JWT authentication.
 
-<p align="center">
-  <img src="docs/images/keystone-system-architecture.png"
-       alt="KEYSTONE System Architecture"
-       width="900"/>
-</p>
+![KEYSTONE System Architecture](docs/images/keystone-system-architecture.png)
 
 ### Architecture Overview
 
