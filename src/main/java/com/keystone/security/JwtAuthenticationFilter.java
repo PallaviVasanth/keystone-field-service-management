@@ -1,5 +1,6 @@
 package com.keystone.security;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,19 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/**
- * Authenticates each incoming request from its {@code Bearer} JWT.
- * <p>
- * Runs once per request: if a valid token identifies a user and no
- * {@link org.springframework.security.core.Authentication} is already
- * present in the {@link SecurityContextHolder}, this filter loads that
- * user and populates the security context so downstream authorization
- * checks (e.g. {@code @PreAuthorize}) see an authenticated principal.
- * Requests with no token, a malformed header, or an invalid token are
- * simply passed through unauthenticated — enforcement of which
- * endpoints require authentication is {@code SecurityConfig}'s
- * responsibility, not this filter's.
- */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -38,17 +26,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
 
-    /**
-     * Extracts and validates the request's JWT, and, if valid, populates
-     * the {@link SecurityContextHolder} with the corresponding
-     * authenticated user before continuing the filter chain.
-     *
-     * @param request     the incoming HTTP request
-     * @param response    the outgoing HTTP response
-     * @param filterChain the remaining filter chain
-     * @throws ServletException if the underlying filter chain throws one
-     * @throws IOException      if the underlying filter chain throws one
-     */
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
@@ -56,31 +33,144 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
+        String requestUri = request.getRequestURI();
         String authHeader = request.getHeader(AUTHORIZATION_HEADER);
 
+        System.out.println("=================================================");
+        System.out.println("JWT FILTER");
+        System.out.println("Request: " + request.getMethod() + " " + requestUri);
+        System.out.println("Authorization header present: " + (authHeader != null));
+
+        /*
+         * No Bearer token.
+         * Let Spring Security decide whether the endpoint is public
+         * or requires authentication.
+         */
         if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+            System.out.println("JWT FILTER: No Bearer token found.");
+            System.out.println("=================================================");
+
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(BEARER_PREFIX.length());
-        String username = jwtService.extractUsername(token);
+        String token = authHeader.substring(BEARER_PREFIX.length()).trim();
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        /*
+         * Never print the actual JWT to the console.
+         */
+        System.out.println(
+                "JWT FILTER: Token received. Length = " + token.length()
+        );
 
-            if (jwtService.isTokenValid(token, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
+        try {
+
+            String username = jwtService.extractUsername(token);
+
+            System.out.println(
+                    "JWT FILTER: Extracted username = " + username
+            );
+
+            if (username != null
+                    && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                UserDetails userDetails =
+                        userDetailsService.loadUserByUsername(username);
+
+                System.out.println(
+                        "JWT FILTER: User found = " + userDetails.getUsername()
                 );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                System.out.println(
+                        "JWT FILTER: Authorities = " + userDetails.getAuthorities()
+                );
+
+                boolean valid =
+                        jwtService.isTokenValid(token, userDetails);
+
+                System.out.println(
+                        "JWT FILTER: Token valid = " + valid
+                );
+
+                if (valid) {
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+
+                    authentication.setDetails(
+                            new WebAuthenticationDetailsSource()
+                                    .buildDetails(request)
+                    );
+
+                    SecurityContextHolder
+                            .getContext()
+                            .setAuthentication(authentication);
+
+                    System.out.println(
+                            "JWT FILTER: Authentication SUCCESS"
+                    );
+
+                    System.out.println(
+                            "JWT FILTER: Authenticated user = "
+                                    + SecurityContextHolder
+                                    .getContext()
+                                    .getAuthentication()
+                                    .getName()
+                    );
+
+                    System.out.println(
+                            "JWT FILTER: Authorities = "
+                                    + SecurityContextHolder
+                                    .getContext()
+                                    .getAuthentication()
+                                    .getAuthorities()
+                    );
+
+                } else {
+
+                    System.out.println(
+                            "JWT FILTER: Authentication FAILED - invalid token"
+                    );
+                }
+
+            } else {
+
+                System.out.println(
+                        "JWT FILTER: Username missing OR authentication already exists."
+                );
             }
+
+        } catch (JwtException | IllegalArgumentException ex) {
+
+            /*
+             * Do not crash the request because of an invalid JWT.
+             * Spring Security will subsequently treat the request
+             * as unauthenticated.
+             */
+            System.out.println(
+                    "JWT FILTER: Invalid JWT - " + ex.getMessage()
+            );
+
+            SecurityContextHolder.clearContext();
+
+        } catch (Exception ex) {
+
+            System.out.println(
+                    "JWT FILTER: Unexpected authentication error - "
+                            + ex.getClass().getName()
+                            + ": "
+                            + ex.getMessage()
+            );
+
+            SecurityContextHolder.clearContext();
         }
+
+        System.out.println("=================================================");
 
         filterChain.doFilter(request, response);
     }
-
 }

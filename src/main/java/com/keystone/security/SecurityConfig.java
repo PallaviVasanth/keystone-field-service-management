@@ -3,23 +3,25 @@ package com.keystone.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 /**
  * Core Spring Security configuration for the KEYSTONE API.
- * <p>
- * Establishes the baseline security posture — stateless sessions, CSRF
- * disabled (appropriate for a stateless, token-authenticated REST API),
- * and which endpoints are public versus authenticated. Authentication
- * itself is delegated to the injected {@link AuthenticationProvider},
- * and every request is authenticated from its JWT by the injected
- * {@link JwtAuthenticationFilter}, registered ahead of Spring Security's
- * own {@link UsernamePasswordAuthenticationFilter}.
+ *
+ * Establishes stateless JWT-based security, disables CSRF for the
+ * REST API, configures public and protected endpoints, and enables
+ * CORS communication between the React frontend and Spring Boot backend.
  */
 @Configuration
 @EnableWebSecurity
@@ -31,26 +33,24 @@ public class SecurityConfig {
 
     /**
      * Defines the HTTP security rules applied to every request.
-     * <p>
-     * Authentication endpoints and the health-check endpoint are public;
-     * everything else requires an authenticated principal. Session
-     * creation is disabled, since authentication state will be carried
-     * by a token on every request rather than a server-side session.
-     * The configured {@link AuthenticationProvider} is registered for
-     * credential verification, and {@link JwtAuthenticationFilter} runs
-     * before {@link UsernamePasswordAuthenticationFilter} to populate the
-     * security context from each request's JWT.
-     *
-     * @param http the {@link HttpSecurity} to configure
-     * @return the built {@link SecurityFilterChain}
-     * @throws Exception if the security configuration cannot be built
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // Enable CORS for requests coming from the React frontend.
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
                 .authorizeHttpRequests(authorize -> authorize
+                        // Allow CORS preflight requests.
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Public authentication and utility endpoints.
                         .requestMatchers(
                                 "/auth/**",
                                 "/actuator/health",
@@ -58,16 +58,67 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
                         ).permitAll()
+
+                        // All other endpoints require authentication.
                         .anyRequest().authenticated()
                 )
+
                 .exceptionHandling(exceptionHandling -> {
-                    // Spring Security defaults (401 for unauthenticated,
-                    // 403 for unauthorized) are used as-is for now.
+                    // Spring Security defaults are used:
+                    // 401 for unauthenticated requests,
+                    // 403 for unauthorized requests.
                 })
+
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }
 
+    /**
+     * CORS configuration for the React frontend.
+     *
+     * Frontend:
+     * http://localhost:3000
+     *
+     * Backend:
+     * http://localhost:8080
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOrigins(
+                List.of("http://localhost:3000")
+        );
+
+        configuration.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH",
+                        "OPTIONS"
+                )
+        );
+
+        configuration.setAllowedHeaders(
+                List.of("*")
+        );
+
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
+
+    }
 }
