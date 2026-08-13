@@ -1,0 +1,24 @@
+import { Alert, Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, Stack, TextField, Typography } from '@mui/material';
+import { FiEdit2, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { useEffect, useState } from 'react';
+import { PageHeader } from '../../components/common/PageHeader';
+import { DataTable } from '../../components/common/DataTable';
+import { StatusBadge } from '../../components/common/StatusBadge';
+import { customerService } from '../../services/customerService';
+import type { CreateCustomerRequest, Customer, UpdateCustomerRequest } from '../../types';
+
+const emptyForm: CreateCustomerRequest = { customerCode:'', companyName:'', contactPerson:'', email:'', phoneNumber:'', addressLine1:'', addressLine2:'', city:'', state:'', postalCode:'', country:'' };
+const fields: Array<keyof CreateCustomerRequest> = ['customerCode','companyName','contactPerson','email','phoneNumber','addressLine1','addressLine2','city','state','postalCode','country'];
+const labels: Record<string,string> = { customerCode:'Customer code', companyName:'Company name', contactPerson:'Contact person', email:'Email', phoneNumber:'Phone number', addressLine1:'Address line 1', addressLine2:'Address line 2', city:'City', state:'State', postalCode:'Postal code', country:'Country' };
+
+export const CustomersPage = () => {
+  const [rows,setRows]=useState<Customer[]>([]); const [loading,setLoading]=useState(true); const [error,setError]=useState(''); const [open,setOpen]=useState(false); const [editing,setEditing]=useState<Customer|null>(null); const [form,setForm]=useState<CreateCustomerRequest>(emptyForm);
+  const load=async()=>{setLoading(true);setError('');try{setRows((await customerService.list()).data);}catch(e){setError(e instanceof Error?e.message:'Unable to load customers.');}finally{setLoading(false);}};
+  useEffect(()=>{void load();},[]);
+  const openCreate=()=>{setEditing(null);setForm(emptyForm);setOpen(true);};
+  const openEdit=(row:Customer)=>{setEditing(row);setForm({customerCode:row.customerCode,companyName:row.companyName,contactPerson:row.contactPerson,email:row.email,phoneNumber:row.phoneNumber??'',addressLine1:row.addressLine1,addressLine2:row.addressLine2??'',city:row.city,state:row.state,postalCode:row.postalCode??'',country:row.country});setOpen(true);};
+  const save=async()=>{setError('');try{if(editing){const data:UpdateCustomerRequest={companyName:form.companyName,contactPerson:form.contactPerson,email:form.email,phoneNumber:form.phoneNumber,addressLine1:form.addressLine1,addressLine2:form.addressLine2,city:form.city,state:form.state,postalCode:form.postalCode,country:form.country,active:editing.active};await customerService.update(editing.id,data);}else await customerService.create(form);setOpen(false);await load();}catch(e){setError(e instanceof Error?e.message:'Unable to save customer.');}};
+  const remove=async(id:string)=>{if(!window.confirm('Delete this customer?'))return;try{await customerService.remove(id);await load();}catch(e){setError(e instanceof Error?e.message:'Unable to delete customer.');}};
+  return <Box><PageHeader title="Customers" subtitle="Manage real customer records from the KEYSTONE backend" action={<Button variant="contained" startIcon={<FiPlus/>} onClick={openCreate}>Add customer</Button>}/>{error&&<Alert severity="error" sx={{mb:2}}>{error}</Alert>}<Card><CardContent><DataTable rows={rows} loading={loading} emptyMessage="No customers found" columns={[{key:'customerCode',label:'Code'},{key:'companyName',label:'Company'},{key:'contactPerson',label:'Contact'},{key:'email',label:'Email'},{key:'city',label:'City'},{key:'active',label:'Status',render:r=><StatusBadge label={r.active?'Active':'Inactive'} color={r.active?'success':'default'}/>},{key:'id',label:'Actions',render:r=><Stack direction="row"><IconButton onClick={()=>openEdit(r)}><FiEdit2/></IconButton><IconButton color="error" onClick={()=>remove(r.id)}><FiTrash2/></IconButton></Stack>}]}/></CardContent></Card>
+  <Dialog open={open} onClose={()=>setOpen(false)} fullWidth maxWidth="md"><DialogTitle>{editing?'Edit customer':'Add customer'}</DialogTitle><DialogContent><Grid container spacing={2} sx={{mt:0.5}}>{fields.map(f=><Grid item xs={12} sm={f==='addressLine1'||f==='addressLine2'?12:6} key={f}><TextField label={labels[f]} value={form[f]??''} onChange={e=>setForm(p=>({...p,[f]:e.target.value}))} fullWidth required={!['phoneNumber','addressLine2','postalCode'].includes(f)}/></Grid>)}</Grid><Typography variant="caption" color="text.secondary">Required fields follow the backend validation rules.</Typography></DialogContent><DialogActions><Button onClick={()=>setOpen(false)}>Cancel</Button><Button variant="contained" onClick={()=>void save()}>{editing?'Save changes':'Create customer'}</Button></DialogActions></Dialog></Box>;
+};

@@ -1,0 +1,30 @@
+version: "3.9"
+
+# Local development infrastructure only.
+# This file intentionally does NOT containerize the Spring Boot app yet —
+# that (multi-stage Dockerfile, app service, network wiring) belongs to a
+# later, deployment-focused phase. For Phase 1, it just gives every
+# developer an identical local PostgreSQL instance to point application-dev.yml at.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: keystone-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-keystone_dev}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in your .env file}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - keystone_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-keystone_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  keystone_postgres_data:
+    driver: local

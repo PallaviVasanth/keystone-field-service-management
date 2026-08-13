@@ -1,109 +1,284 @@
-# Keystone Field Service Management
+# KEYSTONE – Field Service Management Platform
 
-A modern full-stack field service management platform designed to streamline operations for service teams, dispatchers, and administrators. This repository contains the frontend application for Keystone, with the backend and database services planned for integration by the backend team.
+Backend REST API for a modern **Field Service Management (FSM)** system developed using **Spring Boot**.
 
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?logo=vite&logoColor=white)
-![Material UI](https://img.shields.io/badge/MUI-6.x-007FFF?logo=mui&logoColor=white)
+This project was developed as part of the **Zidio Development Java Full Stack Internship**.
 
-## Overview
+---
 
-Keystone Field Service Management is a web-based solution for managing field operations efficiently. It provides role-based access for administrators, dispatchers, managers, and service users, enabling smooth coordination across customers, sites, work orders, and analytics.
+## 📌 Project Overview
 
-## Key Features
+KEYSTONE is a Field Service Management platform designed to streamline service operations by managing customers, service sites, technicians, work orders, and assets.
 
-- Dashboard with operational insights
-- Customer management
-- Site management
-- Work order tracking
-- Dispatcher workflow support
-- Analytics and reporting views
-- Profile and settings management
-- Secure role-based navigation
+The backend exposes secure RESTful APIs protected with JWT Authentication and is designed to integrate with a React frontend.
 
-## Tech Stack
+---
 
-- Frontend: React, TypeScript, Vite
-- UI Library: Material UI
-- Routing: React Router DOM
-- Charts: Recharts
-- State & Forms: Context API, React Hook Form, Yup
-- HTTP Client: Axios
+## ✨ Features
 
-## Project Structure
+- JWT Authentication & Authorization
+- Customer Management
+- Site Management
+- Technician Management
+- Work Order Management
+- Asset Management
+- Dashboard Summary
+- Global Exception Handling
+- Request Validation
+- Database Migration using Flyway
+- Swagger (OpenAPI) Documentation
 
-```text
-frontend/
-  src/
-    components/
-    context/
-    pages/
-    services/
-    styles/
-    theme/
-    types/
+---
+
+## 🛠 Technology Stack
+
+| Category | Technology |
+|----------|------------|
+| Language | Java 21 |
+| Framework | Spring Boot 3.5 |
+| Build Tool | Maven |
+| Database | PostgreSQL |
+| ORM | Spring Data JPA (Hibernate) |
+| Security | Spring Security + JWT |
+| Database Migration | Flyway |
+| Validation | Jakarta Bean Validation |
+| Documentation | Swagger (OpenAPI 3) |
+| Utilities | Lombok |
+| Version Control | Git & GitHub |
+
+---
+
+## 🏗 System Architecture
+
+The KEYSTONE backend follows a layered architecture that separates authentication, business logic, persistence, and database access into independent layers. This architecture improves maintainability, scalability, and code organization while enabling secure communication between the frontend and backend through JWT authentication.
+
+![KEYSTONE System Architecture](docs/images/keystone-system-architecture.png)
+
+### Architecture Overview
+
+The request flow is:
+
+1. React Frontend sends API requests.
+2. Spring Security validates every request.
+3. JWT Authentication Filter authenticates the user.
+4. REST Controllers receive HTTP requests.
+5. Service Layer executes business logic.
+6. Repository Layer interacts with PostgreSQL.
+7. Flyway manages database schema migrations.
+
 ```
 
-## Getting Started
+---
 
-### Prerequisites
+## 📂 Project Structure
 
-- Node.js 18+ recommended
-- npm or yarn
-
-### Installation
-
-```bash
-cd frontend
-npm install
+```
+src
+├── asset
+├── auth
+├── common
+├── config
+├── customer
+├── dashboard
+├── dispatcher
+├── security
+├── site
+├── technician
+├── user
+└── workorder
 ```
 
-### Run the Development Server
+---
 
-```bash
-npm run dev
-```
+## 🗄 Database
 
-The application will be available at the local Vite URL shown in the terminal.
+The database schema is managed using Flyway.
 
-### Build for Production
+Migration Files:
 
-```bash
-npm run build
-```
+- V1 – Users
+- V2 – Customers
+- V3 – Sites
+- V4 – Technicians
+- V5 – Work Orders
+- V6 – Assets
 
-## Environment Configuration
+---
 
-Create an environment file if your backend API is hosted separately:
+## 🔐 Authentication
 
-```bash
-cp .env.example .env
-```
+JWT Authentication is used for securing protected APIs.
 
 Example:
 
-```env
-VITE_API_BASE_URL=http://localhost:5000/api
+```
+Authorization: Bearer <JWT_TOKEN>
 ```
 
-## Backend Integration Note
+Public APIs:
 
-This repository currently contains the frontend interface. The backend APIs and database services will be integrated by the backend team and connected through the configured API base URL.
+- Register
+- Login
+- Swagger UI
+- Health Check
 
-## Contribution Guidelines
+---
 
-Contributions are welcome. Please follow these steps:
+## 📚 API Modules
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push the branch and open a pull request
+| Module | Endpoints |
+|---------|-----------|
+| Authentication | Register, Login |
+| Customers | Create, Read, Update, Delete |
+| Sites | Create, Read, Update, Delete |
+| Technicians | Create, Read, Update, Delete |
+| Work Orders | Create, Read, Update, Delete |
+| Assets | Create, Read, Update, Delete |
+| Dashboard | Summary Statistics |
 
-## License
+---
 
-This project is licensed under the MIT License.
+## 📖 API Documentation
 
-## Team
+Swagger UI
 
-Developed as part of the Zidio Java Full-Stack Internship project.
+```
+http://localhost:8080/api/swagger-ui/index.html
+```
+
+OpenAPI Specification
+
+```
+http://localhost:8080/api/v3/api-docs
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Java 21
+- Maven
+- PostgreSQL
+- Git
+
+### Clone Repository
+
+```bash
+git clone <repository-url>
+cd keystone-backend
+```
+
+### Configure Database
+
+Update the datasource configuration in:
+
+```
+src/main/resources/application.yml
+```
+
+### Build
+
+```bash
+mvnw.cmd clean install
+```
+
+### Run
+
+```bash
+mvnw.cmd spring-boot:run
+```
+
+Application URL
+
+```
+http://localhost:8080/api
+```
+
+---
+
+## 🧪 Testing
+
+The backend APIs were tested using:
+
+- Swagger UI
+- Postman
+
+Verified functionality includes:
+
+- CRUD Operations
+- JWT Authentication
+- Validation
+- Exception Handling
+- Dashboard APIs
+- Database Persistence
+
+---
+
+## 🔮 Future Enhancements
+
+- Role-Based Access Control (RBAC)
+- Email Notifications
+- File Attachments
+- Technician GPS Tracking
+- Inventory Management
+- Reports & Analytics
+- Docker Support
+- CI/CD Pipeline
+
+---
+
+## 👥 Project Contributions
+
+| Component | Contributor |
+|-----------|-------------|
+| Backend API Development | **Pallavi V** |
+| Database Design & Flyway Migrations | **Pallavi V** |
+| Authentication & Security | **Pallavi V** |
+| REST API Testing | **Pallavi V** |
+| API Documentation (Swagger) | **Pallavi V** |
+| Frontend Application | **Santhosh** |
+
+---
+
+## 👩‍💻 Developer
+
+**Pallavi V**
+
+Master of Computer Applications (MCA)
+
+The Oxford College of Engineering
+
+Developed as part of the **Zidio Development Java Full Stack Internship**.
+
+---
+
+## 📄 License
+
+This project was developed for educational and internship purposes.
+
+---
+
+## ⭐ Project Status
+
+| Module | Status |
+|---------|--------|
+| Authentication | ✅ Complete |
+| Customer Module | ✅ Complete |
+| Site Module | ✅ Complete |
+| Technician Module | ✅ Complete |
+| Work Order Module | ✅ Complete |
+| Asset Module | ✅ Complete |
+| Dashboard | ✅ Complete |
+| Swagger Documentation | ✅ Complete |
+| Flyway Migrations | ✅ Complete |
+| PostgreSQL Integration | ✅ Complete |
+
+---
+
+<p align="center">
+
+**Thank you for visiting the KEYSTONE Field Service Management Platform repository.**
+
+</p>
