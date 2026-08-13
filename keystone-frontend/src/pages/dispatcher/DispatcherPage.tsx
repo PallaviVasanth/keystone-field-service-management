@@ -1,0 +1,8 @@
+import { Alert, Box, Card, CardContent, Grid, Stack, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { PageHeader } from '../../components/common/PageHeader';
+import { StatusBadge } from '../../components/common/StatusBadge';
+import { workOrderService } from '../../services/workOrderService';
+import type { WorkOrder } from '../../types';
+const columns=['NEW','ASSIGNED','IN PROGRESS','ON HOLD','COMPLETED','CLOSED'];
+export const DispatcherPage=()=>{const[rows,setRows]=useState<WorkOrder[]>([]);const[loading,setLoading]=useState(true);const[error,setError]=useState('');useEffect(()=>{workOrderService.list().then(r=>setRows(r.data)).catch(e=>setError(e instanceof Error?e.message:'Unable to load dispatch data.')).finally(()=>setLoading(false))},[]);return <Box><PageHeader title="Dispatch Board" subtitle="Live work-order view for dispatch coordination"/>{error&&<Alert severity="error" sx={{mb:2}}>{error}</Alert>}{loading?<Typography color="text.secondary">Loading dispatch board…</Typography>:<Grid container spacing={2}>{columns.map(status=><Grid item xs={12} sm={6} md={4} lg={2} key={status}><Card sx={{minHeight:220}}><CardContent><Typography fontWeight={800}>{status}</Typography><Stack spacing={1.2} sx={{mt:2}}>{rows.filter(r=>r.status===status).map(r=><Box key={r.id} sx={{p:1.5,borderRadius:2,bgcolor:'background.default'}}><Typography fontWeight={700} variant="body2">{r.workOrderNumber}</Typography><Typography variant="body2">{r.title}</Typography><StatusBadge label={r.priority} color="warning"/></Box>)}{rows.filter(r=>r.status===status).length===0&&<Typography variant="caption" color="text.secondary">No work orders</Typography>}</Stack></CardContent></Card></Grid>)}</Grid>}</Box>};

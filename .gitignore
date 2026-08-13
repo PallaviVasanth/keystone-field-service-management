@@ -1,10 +1,18 @@
+# ============================================================
+# Maven / Java
+# ============================================================
 HELP.md
+
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+*.class
+
+# ============================================================
+# Spring / IDE
+# ============================================================
 .apt_generated
 .classpath
 .factorypath
@@ -14,37 +22,67 @@ target/
 .sts4-cache
 bin/
 
-### IntelliJ IDEA ###
-.idea
+.idea/
 *.iws
 *.iml
 *.ipr
 out/
 
-### VS Code ###
 .vscode/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
 
-### Mac OS ###
+# ============================================================
+# OS
+# ============================================================
 .DS_Store
+Thumbs.db
 
-### Environment / secrets ###
+# ============================================================
+# Environment / secrets
+# ============================================================
 .env
 .env.*
+!.env.example
+
 *.pem
 *.p12
 application-local.yml
 application-secrets.yml
 
-### Logs ###
+# ============================================================
+# Logs
+# ============================================================
 *.log
 logs/
 
-### Database ###
+# ============================================================
+# Database backups
+# ============================================================
 *.sql.bak
+
+# ============================================================
+# Frontend / Node
+# ============================================================
+node_modules/
+**/node_modules/
+
+# Frontend build output
+**/dist/
+
+# TypeScript / Vite cache
+*.tsbuildinfo
+**/.vite/
+
+# Optional frontend coverage/output
+**/coverage/
+
+# ============================================================
+# Temporary files
+# ============================================================
+*.tmp
+*.temp
