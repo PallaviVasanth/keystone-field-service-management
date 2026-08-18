@@ -26,15 +26,11 @@ import { useAuth } from '../../context/AuthContext';
 
 import type { RegisterRequest, UserRole } from '../../types';
 
-// Customers are provisioned differently in the real workflow (they raise
-// requests against a site they already belong to, per the project brief's
-// customer portal — not by self-registering with a role picker), so
-// CUSTOMER is intentionally left out of this selector. This form is for
-// staff accounts: dispatcher, technician, or admin.
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
   { value: 'DISPATCHER', label: 'Dispatcher' },
   { value: 'TECHNICIAN', label: 'Technician' },
   { value: 'ADMIN', label: 'Admin / Manager' },
+  { value: 'CUSTOMER', label: 'Customer' },
 ];
 
 export const RegisterPage = () => {
@@ -60,7 +56,16 @@ export const RegisterPage = () => {
     field: K,
     value: RegisterRequest[K],
   ) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    // Clear an existing registration error when the user changes
+    // important form values.
+    if (error) {
+      clearError();
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -69,13 +74,12 @@ export const RegisterPage = () => {
     setSubmitting(true);
 
     try {
-      // Registration does not log the user in (the backend issues no
-      // token on register), so send them to /login afterwards instead of
-      // navigating straight into the app.
+      // Registration does not log the user in.
+      // After successful registration, send the user to login.
       await register(form);
       setSuccess(true);
     } catch {
-      // error state is already set by AuthContext; nothing further to do
+      // AuthContext already stores the backend error.
     } finally {
       setSubmitting(false);
     }
@@ -93,14 +97,22 @@ export const RegisterPage = () => {
           p: 3,
         }}
       >
-        <Card sx={{ width: '100%', maxWidth: 460 }}>
+        <Card
+          sx={{
+            width: '100%',
+            maxWidth: 460,
+          }}
+        >
           <CardContent sx={{ p: 4 }}>
             <Stack spacing={2} alignItems="flex-start">
               <Typography variant="h4" fontWeight={800}>
                 Account created
               </Typography>
 
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
                 Your account has been created. Sign in with your new
                 credentials to continue.
               </Typography>
@@ -130,7 +142,12 @@ export const RegisterPage = () => {
         p: 3,
       }}
     >
-      <Card sx={{ width: '100%', maxWidth: 520 }}>
+      <Card
+        sx={{
+          width: '100%',
+          maxWidth: 520,
+        }}
+      >
         <CardContent sx={{ p: 4 }}>
           <Stack spacing={2}>
             <Box>
@@ -138,28 +155,41 @@ export const RegisterPage = () => {
                 Create your account
               </Typography>
 
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
                 Set up access to Keystone.
               </Typography>
             </Box>
 
             {error ? (
-              <Alert severity="error" onClose={clearError}>
+              <Alert
+                severity="error"
+                onClose={clearError}
+              >
                 {error}
               </Alert>
             ) : null}
 
             <form onSubmit={handleSubmit}>
               <Stack spacing={2}>
+                {/* First + Last Name */}
                 <Stack
-                  direction={{ xs: 'column', sm: 'row' }}
+                  direction={{
+                    xs: 'column',
+                    sm: 'row',
+                  }}
                   spacing={2}
                 >
                   <TextField
                     label="First name"
                     value={form.firstName}
                     onChange={(event) =>
-                      updateField('firstName', event.target.value)
+                      updateField(
+                        'firstName',
+                        event.target.value,
+                      )
                     }
                     fullWidth
                     required
@@ -174,7 +204,10 @@ export const RegisterPage = () => {
                     label="Last name"
                     value={form.lastName}
                     onChange={(event) =>
-                      updateField('lastName', event.target.value)
+                      updateField(
+                        'lastName',
+                        event.target.value,
+                      )
                     }
                     fullWidth
                     required
@@ -186,12 +219,16 @@ export const RegisterPage = () => {
                   />
                 </Stack>
 
+                {/* Email */}
                 <TextField
                   label="Email"
                   type="email"
                   value={form.email}
                   onChange={(event) =>
-                    updateField('email', event.target.value)
+                    updateField(
+                      'email',
+                      event.target.value,
+                    )
                   }
                   fullWidth
                   required
@@ -202,12 +239,20 @@ export const RegisterPage = () => {
                   }}
                 />
 
+                {/* Password */}
                 <TextField
                   label="Password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={
+                    showPassword
+                      ? 'text'
+                      : 'password'
+                  }
                   value={form.password}
                   onChange={(event) =>
-                    updateField('password', event.target.value)
+                    updateField(
+                      'password',
+                      event.target.value,
+                    )
                   }
                   fullWidth
                   required
@@ -223,7 +268,9 @@ export const RegisterPage = () => {
                       <InputAdornment position="end">
                         <IconButton
                           onClick={() =>
-                            setShowPassword((prev) => !prev)
+                            setShowPassword(
+                              (prev) => !prev,
+                            )
                           }
                           edge="end"
                           aria-label={
@@ -243,11 +290,15 @@ export const RegisterPage = () => {
                   }}
                 />
 
+                {/* Phone */}
                 <TextField
                   label="Phone number"
                   value={form.phoneNumber}
                   onChange={(event) =>
-                    updateField('phoneNumber', event.target.value)
+                    updateField(
+                      'phoneNumber',
+                      event.target.value,
+                    )
                   }
                   fullWidth
                   slotProps={{
@@ -257,6 +308,7 @@ export const RegisterPage = () => {
                   }}
                 />
 
+                {/* Role */}
                 <TextField
                   select
                   label="Role"
@@ -280,6 +332,17 @@ export const RegisterPage = () => {
                   ))}
                 </TextField>
 
+                {/* Customer-specific guidance */}
+                {form.role === 'CUSTOMER' ? (
+                  <Alert severity="info">
+                    Customer accounts must use the email address
+                    already registered for the customer company in
+                    KEYSTONE. If your company has not been registered
+                    yet, please contact your KEYSTONE administrator.
+                  </Alert>
+                ) : null}
+
+                {/* Submit */}
                 <Button
                   type="submit"
                   variant="contained"
@@ -299,7 +362,10 @@ export const RegisterPage = () => {
               textAlign="center"
             >
               Already have an account?{' '}
-              <Link component={RouterLink} to="/login">
+              <Link
+                component={RouterLink}
+                to="/login"
+              >
                 Sign in
               </Link>
             </Typography>

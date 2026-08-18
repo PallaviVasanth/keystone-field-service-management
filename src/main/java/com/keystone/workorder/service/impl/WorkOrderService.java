@@ -6,6 +6,8 @@ import com.keystone.site.entity.Site;
 import com.keystone.site.repository.SiteRepository;
 import com.keystone.technician.entity.Technician;
 import com.keystone.technician.repository.TechnicianRepository;
+import com.keystone.user.entity.User;
+import com.keystone.user.repository.UserRepository;
 import com.keystone.workorder.dto.CreateWorkOrderRequest;
 import com.keystone.workorder.dto.UpdateWorkOrderRequest;
 import com.keystone.workorder.dto.WorkOrderResponse;
@@ -26,24 +28,47 @@ public class WorkOrderService {
     private final CustomerRepository customerRepository;
     private final SiteRepository siteRepository;
     private final TechnicianRepository technicianRepository;
+    private final UserRepository userRepository;
 
-    public WorkOrderResponse createWorkOrder(CreateWorkOrderRequest request) {
+    public WorkOrderResponse createWorkOrder(
+            CreateWorkOrderRequest request
+    ) {
 
-        if (workOrderRepository.existsByWorkOrderNumber(request.getWorkOrderNumber())) {
-            throw new IllegalArgumentException("Work Order Number already exists.");
+        if (workOrderRepository.existsByWorkOrderNumber(
+                request.getWorkOrderNumber()
+        )) {
+            throw new IllegalArgumentException(
+                    "Work Order Number already exists."
+            );
         }
 
-        Customer customer = customerRepository.findById(request.getCustomerId())
-                .orElseThrow(() -> new IllegalArgumentException("Customer not found."));
+        Customer customer =
+                customerRepository.findById(request.getCustomerId())
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Customer not found."
+                                )
+                        );
 
-        Site site = siteRepository.findById(request.getSiteId())
-                .orElseThrow(() -> new IllegalArgumentException("Site not found."));
+        Site site =
+                siteRepository.findById(request.getSiteId())
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Site not found."
+                                )
+                        );
 
         Technician technician = null;
 
         if (request.getTechnicianId() != null) {
-            technician = technicianRepository.findById(request.getTechnicianId())
-                    .orElseThrow(() -> new IllegalArgumentException("Technician not found."));
+            technician =
+                    technicianRepository.findById(
+                            request.getTechnicianId()
+                    ).orElseThrow(() ->
+                            new IllegalArgumentException(
+                                    "Technician not found."
+                            )
+                    );
         }
 
         WorkOrder workOrder = WorkOrder.builder()
@@ -58,7 +83,9 @@ public class WorkOrderService {
                 .scheduledDate(request.getScheduledDate())
                 .build();
 
-        return mapToResponse(workOrderRepository.save(workOrder));
+        return mapToResponse(
+                workOrderRepository.save(workOrder)
+        );
     }
 
     public List<WorkOrderResponse> getAllWorkOrders() {
@@ -69,24 +96,75 @@ public class WorkOrderService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Returns work orders belonging to the currently authenticated customer.
+     */
+    public List<WorkOrderResponse> getMyWorkOrders(String email) {
+
+        User user =
+                userRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Authenticated user not found."
+                                )
+                        );
+
+        if (user.getCustomer() == null) {
+            throw new IllegalArgumentException(
+                    "This user is not linked to a customer account."
+            );
+        }
+
+        UUID customerId = user.getCustomer().getId();
+
+        return workOrderRepository.findAll()
+                .stream()
+                .filter(workOrder ->
+                        workOrder.getCustomer()
+                                .getId()
+                                .equals(customerId)
+                )
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     public WorkOrderResponse getWorkOrderById(UUID id) {
 
-        WorkOrder workOrder = workOrderRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Work Order not found."));
+        WorkOrder workOrder =
+                workOrderRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Work Order not found."
+                                )
+                        );
 
         return mapToResponse(workOrder);
     }
 
-    public WorkOrderResponse updateWorkOrder(UUID id, UpdateWorkOrderRequest request) {
+    public WorkOrderResponse updateWorkOrder(
+            UUID id,
+            UpdateWorkOrderRequest request
+    ) {
 
-        WorkOrder workOrder = workOrderRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Work Order not found."));
+        WorkOrder workOrder =
+                workOrderRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Work Order not found."
+                                )
+                        );
 
         Technician technician = null;
 
         if (request.getTechnicianId() != null) {
-            technician = technicianRepository.findById(request.getTechnicianId())
-                    .orElseThrow(() -> new IllegalArgumentException("Technician not found."));
+            technician =
+                    technicianRepository.findById(
+                            request.getTechnicianId()
+                    ).orElseThrow(() ->
+                            new IllegalArgumentException(
+                                    "Technician not found."
+                            )
+                    );
         }
 
         workOrder.setTechnician(technician);
@@ -97,34 +175,54 @@ public class WorkOrderService {
         workOrder.setScheduledDate(request.getScheduledDate());
         workOrder.setCompletedDate(request.getCompletedDate());
 
-        return mapToResponse(workOrderRepository.save(workOrder));
+        return mapToResponse(
+                workOrderRepository.save(workOrder)
+        );
     }
 
     public void deleteWorkOrder(UUID id) {
 
-        WorkOrder workOrder = workOrderRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Work Order not found."));
+        WorkOrder workOrder =
+                workOrderRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Work Order not found."
+                                )
+                        );
 
         workOrderRepository.delete(workOrder);
     }
 
-    private WorkOrderResponse mapToResponse(WorkOrder workOrder) {
+    private WorkOrderResponse mapToResponse(
+            WorkOrder workOrder
+    ) {
 
         return WorkOrderResponse.builder()
                 .id(workOrder.getId())
-                .workOrderNumber(workOrder.getWorkOrderNumber())
-                .customerId(workOrder.getCustomer().getId())
-                .siteId(workOrder.getSite().getId())
+                .workOrderNumber(
+                        workOrder.getWorkOrderNumber()
+                )
+                .customerId(
+                        workOrder.getCustomer().getId()
+                )
+                .siteId(
+                        workOrder.getSite().getId()
+                )
                 .technicianId(
                         workOrder.getTechnician() != null
                                 ? workOrder.getTechnician().getId()
-                                : null)
+                                : null
+                )
                 .title(workOrder.getTitle())
                 .description(workOrder.getDescription())
                 .priority(workOrder.getPriority())
                 .status(workOrder.getStatus())
-                .scheduledDate(workOrder.getScheduledDate())
-                .completedDate(workOrder.getCompletedDate())
+                .scheduledDate(
+                        workOrder.getScheduledDate()
+                )
+                .completedDate(
+                        workOrder.getCompletedDate()
+                )
                 .createdAt(workOrder.getCreatedAt())
                 .updatedAt(workOrder.getUpdatedAt())
                 .build();

@@ -4,6 +4,8 @@ import com.keystone.auth.dto.LoginRequest;
 import com.keystone.auth.dto.LoginResponse;
 import com.keystone.auth.dto.RegisterRequest;
 import com.keystone.auth.dto.RegisterResponse;
+import com.keystone.customer.entity.Customer;
+import com.keystone.customer.repository.CustomerRepository;
 import com.keystone.security.JwtService;
 import com.keystone.user.entity.User;
 import com.keystone.user.repository.UserRepository;
@@ -17,19 +19,13 @@ import org.springframework.stereotype.Service;
 
 /**
  * Handles KEYSTONE's registration and login flows.
- * <p>
- * Registration creates and persists a new {@link User} with an encoded
- * password. Login delegates credential verification to the {@link
- * AuthenticationManager} and, once authenticated, issues a JWT for the
- * caller via {@link JwtService}. This class holds no token mechanics
- * and no user-lookup logic of its own — those belong to {@link
- * JwtService} and {@code CustomUserDetailsService} respectively.
  */
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
 
     private final UserRepository userRepository;
+    private final CustomerRepository customerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -37,14 +33,27 @@ public class AuthenticationService {
     /**
      * Registers a new user.
      *
-     * @param request the registration details
-     * @return the created user's details
-     * @throws IllegalArgumentException if a user with the given email
-     *                                   already exists
+     * CUSTOMER registration requires an existing Customer record
+     * with the same email address. This links the portal user to
+     * the company/customer record rather than creating a duplicate.
      */
     public RegisterResponse register(RegisterRequest request) {
+
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email already exists");
+        }
+
+        Customer customer = null;
+
+        /*
+         * CUSTOMER accounts must belong to an existing customer record.
+         */
+        if (request.getRole().name().equals("CUSTOMER")) {
+            customer = customerRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "No customer record exists for this email. "
+                                    + "Please contact your KEYSTONE administrator."
+                    ));
         }
 
         User user = User.builder()
@@ -54,6 +63,7 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .phoneNumber(request.getPhoneNumber())
                 .role(request.getRole())
+                .customer(customer)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -71,27 +81,27 @@ public class AuthenticationService {
     }
 
     /**
-     * Authenticates a user and issues a JWT for subsequent requests.
-     *
-     * @param request the login credentials
-     * @return the issued token together with the authenticated user's
-     *         details
-     * @throws org.springframework.security.core.AuthenticationException
-     *         if the credentials are invalid
-     * @throws IllegalArgumentException if the authenticated user cannot
-     *                                   be found (unexpected in practice)
+     * Authenticates a user and issues a JWT.
      */
     public LoginResponse login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Authentication authentication =
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                request.getEmail(),
+                                request.getPassword()
+                        )
+                );
+
+        UserDetails userDetails =
+                (UserDetails) authentication.getPrincipal();
+
         String token = jwtService.generateToken(userDetails);
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "User not found with email: " + request.getEmail()));
+                        "User not found with email: " + request.getEmail()
+                ));
 
         return LoginResponse.builder()
                 .token(token)
@@ -103,5 +113,4 @@ public class AuthenticationService {
                 .role(user.getRole())
                 .build();
     }
-
 }

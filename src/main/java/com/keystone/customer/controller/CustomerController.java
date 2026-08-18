@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +23,8 @@ public class CustomerController {
 
     @PostMapping
     public ResponseEntity<CustomerResponse> createCustomer(
-            @Valid @RequestBody CreateCustomerRequest request) {
+            @Valid @RequestBody CreateCustomerRequest request
+    ) {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(customerService.createCustomer(request));
@@ -31,28 +33,54 @@ public class CustomerController {
     @GetMapping
     public ResponseEntity<List<CustomerResponse>> getAllCustomers() {
 
-        return ResponseEntity.ok(customerService.getAllCustomers());
+        return ResponseEntity.ok(
+                customerService.getAllCustomers()
+        );
+    }
+
+    /**
+     * Returns the customer record linked to the authenticated user.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<CustomerResponse> getMyCustomer(
+            Authentication authentication
+    ) {
+
+        return ResponseEntity.ok(
+                customerService.getMyCustomer(
+                        authentication.getName()
+                )
+        );
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CustomerResponse> getCustomerById(
-            @PathVariable UUID id) {
+            @PathVariable UUID id
+    ) {
 
-        return ResponseEntity.ok(customerService.getCustomerById(id));
+        return ResponseEntity.ok(
+                customerService.getCustomerById(id)
+        );
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CustomerResponse> updateCustomer(
             @PathVariable UUID id,
-            @Valid @RequestBody UpdateCustomerRequest request) {
+            @Valid @RequestBody UpdateCustomerRequest request
+    ) {
 
-        return ResponseEntity.ok(customerService.updateCustomer(id, request));
+        return ResponseEntity.ok(
+                customerService.updateCustomer(id, request)
+        );
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCustomer(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteCustomer(
+            @PathVariable UUID id
+    ) {
 
         customerService.deleteCustomer(id);
+
         return ResponseEntity.noContent().build();
-    }   
+    }
 }
