@@ -126,15 +126,15 @@ Public APIs:
 
 ## 📚 API Modules
 
-| Module | Endpoints |
-|---------|-----------|
-| Authentication | Register, Login |
-| Customers | Create, Read, Update, Delete |
-| Sites | Create, Read, Update, Delete |
-| Technicians | Create, Read, Update, Delete |
-| Work Orders | Create, Read, Update, Delete |
-| Assets | Create, Read, Update, Delete |
-| Dashboard | Summary Statistics |
+| Module               | Endpoints                    |
+|----------------------|------------------------------|
+| Authentication       | Register, Login              |
+| Customers            | Create, Read, Update, Delete |
+| Sites                | Create, Read, Update, Delete |
+| Technicians          | Create, Read, Update, Delete |
+| Work Orders          | Create, Read, Update, Delete |
+| Assets               | Create, Read, Update, Delete |
+| Dashboard            | Summary Statistics           |
 
 ---
 
